@@ -1,0 +1,15 @@
+.chat_content {
+  overflow: auto;
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+.chat_content::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera*/
+}
+
+.chat_input>input{
+  height: 40px;
+}
+.chat_input>button{
+  height: 40px;
+}

@@ -1,0 +1,32 @@
+.Login_Main{
+  margin: 0 auto;
+  margin-top: 100px;
+  width: 500px;
+  height: 600px;
+  border: 1px solid black;
+}
+
+.Loigin_input_table_body{
+  height: 70px;
+}
+.Login_input_tag{
+  width: 30%;
+  text-align: right;
+  padding-right: 10px;
+  font-size: 30px;
+}
+
+.Login_input_value{
+  width: 70%;
+}
+.Login_input_value>input{
+  width: 80%;
+  height: 30px;
+}
+
+.Login_input_btn{
+  text-align: center;
+}
+.Login_input_btn>button{
+  margin: 0px 20px;
+}

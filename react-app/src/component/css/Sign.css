@@ -1,0 +1,43 @@
+.Sign_Main{
+  width: 500px;
+  height: 600px;
+  margin: 0 auto;
+  margin-top: 100px;
+  border: 1px solid black;
+}
+.Sign_table{
+  width: 80%;
+  margin: 0 auto;
+  padding-top:50px;
+}
+
+.Sign_thead{
+  height: 150px;
+}
+.Sign_thead>td{
+  text-align: center;
+  font-size: 50px;
+}
+
+.Sign_tbody{
+  height: 70px;
+}
+.Sign_input_tag{
+  width: 30%;
+  text-align: right;
+  padding-right: 10px;
+  font-size: 30px;
+}
+.Sign_input_value{
+  width: 70%;
+}
+.Sign_input_value>input{
+  width: 80%;
+  height: 30px;
+}
+.Sign_input_btn{
+  text-align: center;
+}
+.Sign_input_btn>button{
+  margin: 0px 20px;
+}
