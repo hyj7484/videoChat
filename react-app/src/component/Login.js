@@ -14,8 +14,13 @@ export default function Login(props){
     id : "",
     pw : "",
   });
+
   const history = useHistory();
   const urlMain = props.url;
+
+  const url = {
+    login : `${urlMain}user/login`,
+  }
 
   const changeId = (e) => {
     setData({
@@ -31,14 +36,10 @@ export default function Login(props){
   }
 
   const login = () => {
-    const url = `${urlMain}user/login`;
-    axios.post(url, data)
+    axios.post(url.login, data)
     .then(req => {
       if(req.data){
-        setUser({
-          id : req.data.userid,
-          name : req.data.username
-        });
+        setUser(req.data);
       }else{
         console.log("fail");
       }

@@ -10,8 +10,13 @@ export default function Sign(props){
     pw : "",
     name : "",
   });
-  const mainUrl = props.url;
+  const urlMain = props.url;
   const history = useHistory();
+
+  const url = {
+    sign : `${urlMain}user/addUser`,
+  }
+
   const changeId = (e) => {
     setData({
       ...data,
@@ -32,8 +37,7 @@ export default function Sign(props){
   }
 
   const sign_data = () => {
-    const url = `${mainUrl}/user/addUser`;
-    axios.post(url, data)
+    axios.post(url.sign, data)
     .then(req => {
       if(req.data.chk){
         history.push('/');
