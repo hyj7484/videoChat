@@ -2,120 +2,106 @@ import {useState, useEffect, useRef} from 'react';
 import {useRouteMatch} from 'react-router-dom';
 import io from 'socket.io-client';
 
-
-const webRTC = async (props) => {
-  const socket = io.connect('localhost:3000/video');
-
-  const configuration = {
-    'iceServers': [
-      {
-        'urls': 'stun:stun.l.google.com:19302'
-      },
-      {
-        'urls': 'turn:192.158.29.39:3478?transport=udp',
-        'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-        'username': '28224511:1379330808'
-      },
-      {
-        'urls': 'turn:192.158.29.39:3478?transport=tcp',
-        'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-        'username': '28224511:1379330808'
-      }
-    ]}
-  const peerConnection = new RTCPeerConnection(configuration);
-  peerConnection.onicecandidate = (e) => {
-    console.log('on ice ');
-    console.log(e);
-  }
-  peerConnection.onicegatheringstatechange = (e) => {
-    console.log('icegatheringstatechange');
-    console.log(e);
-  }
-
-  peerConnection.addEventListener('icecandidate', event => {
-    console.log(event);
-    if (event.candidate) {
-      console.log(event.candidate);
-      socket.emit('new-ice-candidate', event.candidate);
-        // signalingChannel.send({'new-ice-candidate': event.candidate});
-    }
-  });
-  peerConnection.addEventListener('icegatheringstatechange', e => {
-    console.log('icegatheringstatechange');
-    console.log(e);
-  })
-
-  peerConnection.addEventListener('connectionstatechange', event => {
-    if (peerConnection.connectionState === 'connected') {
-        // Peers connected!
-        console.log('connect');
-    }
-  });
-
-  console.log(peerConnection);
-
-  const init = {
-    room : props.room,
-    name : props.name,
-  }
-  socket.emit('init', init)
-
-  socket.on('offer', async msg => {
-    console.log('offer');
-    peerConnection.setRemoteDescription(new RTCSessionDescription(msg));
-    const answer = await peerConnection.createAnswer();
-    await peerConnection.setLocalDescription(answer);
-    peerConnection.addIceCandidate(msg);
-    console.log(msg);
-    console.log(peerConnection);
-    socket.emit('answer', answer);
-  });
-  socket.on('answer', async msg => {
-    console.log('asnwer');
-    console.log(msg);
-    console.log(peerConnection);
-    peerConnection.addIceCandidate(msg);
-    const remoteDesc = new RTCSessionDescription(msg);
-    await peerConnection.setRemoteDescription(remoteDesc);
-  })
-
-  const offer = await peerConnection.createOffer();
-  // setOffer(offer);
-  await peerConnection.setLocalDescription(offer);
-  socket.emit('offer', offer);
-}
-
 const Test = () => {
-  const [socket, setSocket] = useState(null);
-  const [offer, setOffer] = useState(null);
-  const videoClient = useRef(null);
   const videoHost   = useRef(null);
-
+  const videoClient = useRef(null);
+  const [host, setHost]     = useState(null);
+  const [client, setClient] = useState(null);
+  const [socket, setSocket] = useState(null);
+  const [peerConnection, setPeerConnection] = useState(null);
+  const config = { 'iceServers' : [{
+    'urls' : 'stun:stun.l.google.com:19302'
+  }]};
   const routeMatch = useRouteMatch('/test/:id').params;
+  useEffect(async ()=>{
+    setPeerConnection(new RTCPeerConnection(config));
+    setSocket(io.connect('localhost:3002/video'));
+  }, []);
+  useEffect(async ()=>{
+    if(peerConnection !== null){
+      console.log(peerConnection);
+      const option = {
+        video : true,
+        audio : true
+      }
+      const stream = await navigator.mediaDevices.getUserMedia(option)
+      stream.getTracks().forEach(track => {
+        peerConnection.addTrack(track, stream);
+      });
+      videoHost.current.srcObject = stream;
+      console.log(stream);
+      peerConnection.onicecandidate = (e) => {
+        console.log(e);
+        if(e.candidate){
+          console.log('on ice candidate');
+        socket.emit('candidate', e.candidate);
+        }
+      }
+      peerConnection.onconnectionstatechange = (e) => {
+        console.log(e);
+      }
+      peerConnection.oniceconnectionstatechange = (e) => {
+        console.log(e);
+      }
+      peerConnection.ontrack = (ev) => {
+        console.log(ev);
+        videoClient.current.srcObject = ev.streams[0];
+        videoClient.current.play();
+      }
+    }
+  }, [peerConnection])
 
   useEffect(()=>{
-    // setSocket(io.connect('localhost:3002/video'));
-    const data = {
-      room : routeMatch.id,
-      name : `Hwang Yong Ju ${Math.floor(Math.random() * 10)}`,
+    if(socket !== null){
+      socket.on('init', msg => {
+        console.log(msg);
+      });
+      socket.on('fullUser', msg => {
+        console.log(msg);
+      });
+      socket.on('offer', async msg => {
+        console.log('offer');
+        console.log(msg);
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(msg));
+        const answer = await peerConnection.createAnswer({offerToReceiveAudio : true, offerToReceiveVideo : true});
+        peerConnection.setLocalDescription(new RTCSessionDescription(answer));
+        socket.emit('answer', answer);
+      });
+      socket.on('answer', async msg => {
+        console.log('answer');
+        console.log(msg);
+        peerConnection.setRemoteDescription(new RTCSessionDescription(msg));
+      });
+      socket.on('candidate', async msg => {
+        console.log("candidate");
+        await peerConnection.addIceCandidate(new RTCIceCandidate(msg));
+      });
+
+      const data = {
+        room : routeMatch.id,
+        name : 'hwang yongJu' + Math.floor(Math.random() * 100),
+      }
+      socket.emit('init', data);
     }
-    webRTC(data);
-  }, []);
+  }, [socket])
 
-  useEffect(() => {
-
-  }, [offer]);
-
-  const getVideo = () => {
-    console.log('getVideo');
+  const createOffer = async () => {
+    const offer = await peerConnection.createOffer({offerToReceiveAudio : true, offerToReceiveVideo : true})
+    peerConnection.setLocalDescription(new RTCSessionDescription(offer));
+    socket.emit('offer', offer);
   }
+
+
   const test = () => {
-    console.log('test');
+    createOffer();
+  }
+  const getVideo = () => {
+
   }
   return (
     <div>
-      <video ref={videoHost} autoPlay width="500px" height="500px"/>
-      <video ref={videoClient} autoPlay width="500px" height="500px"/>
+      <video ref={videoHost} autoPlay width="500px" height="500px" controls/>
+      <video ref={videoClient} autoPlay width="500px" height="500px" controls/>
 
       <button onClick={test}> sendVideo </button>
       <button onClick={getVideo}> getVideo </button>

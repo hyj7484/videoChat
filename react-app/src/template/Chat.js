@@ -1,6 +1,5 @@
 import React, {useState, useEffect} from 'react';
 import io from 'socket.io-client';
-import './css/chat.css';
 
 export default function Chat(props){
   const [socket, setSocket] = useState(null);

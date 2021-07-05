@@ -2,25 +2,40 @@
 // const io = require('socket.io')(server, {
 //   cors : { origin : "*"}
 // });
+let user = [];
+let socketRoom = {};
+
 
 module.exports = (server) => {
   const app = require('express')();
   const io = require('socket.io')(server, {
     cors : {origin : "*"}
   })
-  const clients = new Map();
 
   const video = io.of('/video').on('connect', socket => {
     socket.on('init', data => {
-      socket.name = data.name;
-      socket.room = data.room;
+      if(user[data.room]){
+        if(user[data.room].length >= 2){
+          console.log('Full user');
+          socket.emit('fullUser', 'full User');
+          return;
+        }
+        user[data.room].push({id : socket.id, name : data.name});
+      }else{
+        user[data.room] = [{id : socket.id, name : data.name}];
+      }
 
-      socket.join(socket.room);
+      socket.join(data.room);
+      socket.room = data.room;
+      socket.name = data.name;
+      socketRoom[socket.id] = data.room;
+      console.log(`${socket.name}님이 ${socket.room}번 방에 참여하였습니다.`);
       const msg = {
         room : socket.room,
-        msg : `${socket.name}님이 ${socket.room} 방에 입장하였습니다.`,
+        msg : `${socket.name}님이 ${socket.room}번 방에 참여하였습니다.`,
+        userCount : user[data.room].length,
       }
-      video.to(socket.room).emit('init', msg);
+      socket.to(socket.room).emit('init', msg);
     });
 
     socket.on('offer', data => {
@@ -31,14 +46,21 @@ module.exports = (server) => {
       console.log('socket on asnwer');
       socket.to(socket.room).emit('answer', data);
     });
-    socket.on('new-ice-candidate', msg => {
-      console.log('socket on new-ice-candidate');
+    socket.on('candidate', msg => {
+      console.log(socket.room);
       console.log(msg);
-    })
+      socket.to(socket.room).emit('candidate', msg);
+    });
 
     socket.on('disconnect', () => {
       const msg = `Client ${socket.name} disconnect`;
-      socket.leave(socket.room);
+      console.log(`${socket.name}님이 ${socket.room}번 방을 나감 disconnect`);
+      const room = socketRoom[socket.id];
+      delete socketRoom[socket.id];
+      if(user[room]){
+        user[room] = user[room].filter(user => user.id !== socket.id);
+      }
+      socket.leave(room);
       video.to(socket.room).emit('out', msg);
     });
       // 접속된 모든 클라이언트에게 메시지를 전송한다
@@ -55,19 +77,17 @@ module.exports = (server) => {
   });
 
   const chat = io.of('/chat').on('connect', (socket) => {
-    console.log('chat connect');
     socket.on('join', data => {
       console.log("join user")
       const name = socket.name = data.name;
       const room = socket.room = data.room;
-
       const msg = {
         name : name,
         msg : `${name} 님이 ${room} 방에 접속하였습니다.`,
       }
 
       socket.join(room);
-      chat.to(room).emit('join', msg);
+      socket.to(room).emit('join', msg);
     });
     socket.on('chat', msg => {
       const data = {

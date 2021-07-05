@@ -1,71 +1,29 @@
 import React, {useState, useEffect} from 'react'
+import {Link} from 'react-router-dom';
 import axios from 'axios';
 import './css/Main.css';
 
-export default function Main(props){
-  const [roomList, setRoomList] = useState(null);
-  const [user, setUser] = props.userState;
-  const [data, setData] = props.dataState;
-  const setCenterView   = props.setCenterView;
-  const urlMain = props.url;
+const Main = (props) => {
+  const [room, setRoom] = useState(null);
+  const [name, setName] = useState(null);
 
-  useEffect(async ()=>{
-    await getRoomList();
-  }, [])
-
-  const getRoomList = async () => {
-    await axios.post(url.getRoomList)
-    .then(req => {
-      console.log(req);
-    });
+  const changeRoom = (e) => {
+    setRoom(e.target.value);
   }
-
-  const url = {
-    getRoomList : `${urlMain}room/getroomlist`,
-    makeRoom : `${urlMain}room/makeroom`,
-  }
-  const logout = () => {
-    localStorage.clear();
-    setUser(null);
-  }
-
-  const makeRoom = async () => {
-    let text = "";
-    const handleInput = (e) =>{
-      text = e.target.value;
-    }
-    const insertRoom = () => {
-      
-      setCenterView(null);
-    }
-    setCenterView(
-      <div className="Main_makeRoom_Option">
-        <input type="text" onChange={handleInput}/> <br/><br/>
-        <button onClick={insertRoom}> 방생성 </button>
-      </div>
-    )
-  }
-  const innerRoom = () => {
+  const changeName = (e) => {
+    setName(e.target.value);
   }
 
   return (
-    <div className="Main_Main">
-      <div className="Main_top">
-        <button onClick={logout}> Logout </button>
-        <button > 방참가 </button>
-        <button onClick={makeRoom}> 방생성 </button>
+    <>
+      <div className="Main">
+        <input type="number" onChange={changeRoom} placeholder="방번호를 입력해주세요." className="input_room"/> <br/>
+        <input type="text" onChange={changeName} placeholder="이름을 입력해주세요." className="input_name"/> <br/>
+        <Link to={`chat/${room}`} className="btn"> 방입장 </Link>
       </div>
-      <div className="Main_Content">
-        <div className="Main_Content_Left">
-
-        </div>
-        <div className="Main_Content_Right">
-
-        </div>
-      </div>
-      <div className="Main_bottom">
-
-      </div>
-    </div>
+    </>
   )
 }
+
+
+export default Main;

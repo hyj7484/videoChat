@@ -28,6 +28,7 @@ app.post('/addUser', (req, res, next) => {
 app.post('/login', (req, res, next) => {
   const id = req.body.id;
   const pw = req.body.pw;
+  console.log('login');
   const query = `select * from users where userid = '${id}' and userpw = '${pw}'`;
   mysql.query(query, (err, rows) => {
     if(err) throw err;
