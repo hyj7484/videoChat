@@ -1,11 +1,9 @@
-import React, {useState, useEffect} from 'react'
+import React, {useState} from 'react'
 import {Link} from 'react-router-dom';
-import axios from 'axios';
-import './css/Main.css';
 
 const Main = (props) => {
   const [room, setRoom] = useState(null);
-  const [name, setName] = useState(null);
+  const setName = props.setName;
 
   const changeRoom = (e) => {
     setRoom(e.target.value);

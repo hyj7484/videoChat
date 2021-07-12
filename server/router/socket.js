@@ -47,8 +47,7 @@ module.exports = (server) => {
       socket.to(socket.room).emit('answer', data);
     });
     socket.on('candidate', msg => {
-      console.log(socket.room);
-      console.log(msg);
+      console.log('socket on candidate');
       socket.to(socket.room).emit('candidate', msg);
     });
 

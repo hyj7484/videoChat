@@ -5,33 +5,31 @@ import io from 'socket.io-client';
 const Test = () => {
   const videoHost   = useRef(null);
   const videoClient = useRef(null);
-  const [host, setHost]     = useState(null);
-  const [client, setClient] = useState(null);
   const [socket, setSocket] = useState(null);
   const [peerConnection, setPeerConnection] = useState(null);
-  const config = { 'iceServers' : [{
-    'urls' : 'stun:stun.l.google.com:19302'
-  }]};
   const routeMatch = useRouteMatch('/test/:id').params;
-  useEffect(async ()=>{
+  useEffect(()=>{
+    const config = { 'iceServers' : [{
+      'urls' : 'stun:stun.l.google.com:19302'
+    }]};
     setPeerConnection(new RTCPeerConnection(config));
     setSocket(io.connect('localhost:3002/video'));
   }, []);
-  useEffect(async ()=>{
+  useEffect(()=>{
     if(peerConnection !== null){
-      console.log(peerConnection);
       const option = {
         video : true,
         audio : true
       }
-      const stream = await navigator.mediaDevices.getUserMedia(option)
-      stream.getTracks().forEach(track => {
-        peerConnection.addTrack(track, stream);
+      navigator.mediaDevices.getUserMedia(option)
+      .then(stream => {
+        stream.getTracks().forEach(track => {
+          peerConnection.addTrack(track, stream);
+        });
+        videoHost.current.srcObject = stream;
       });
-      videoHost.current.srcObject = stream;
-      console.log(stream);
+
       peerConnection.onicecandidate = (e) => {
-        console.log(e);
         if(e.candidate){
           console.log('on ice candidate');
         socket.emit('candidate', e.candidate);
@@ -49,7 +47,7 @@ const Test = () => {
         videoClient.current.play();
       }
     }
-  }, [peerConnection])
+  }, [socket, peerConnection])
 
   useEffect(()=>{
     if(socket !== null){
@@ -83,7 +81,7 @@ const Test = () => {
       }
       socket.emit('init', data);
     }
-  }, [socket])
+  }, [peerConnection, socket, routeMatch])
 
   const createOffer = async () => {
     const offer = await peerConnection.createOffer({offerToReceiveAudio : true, offerToReceiveVideo : true})

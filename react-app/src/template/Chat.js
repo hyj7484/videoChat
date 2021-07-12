@@ -46,8 +46,9 @@ export default function Chat(props){
       chat
     ])
   }, [chat]);
+
   const chat_Enter = () => {
-    if(input != ""){
+    if(input !== ""){
       socket.emit('chat', input);
       setInput("");
     }
@@ -55,8 +56,8 @@ export default function Chat(props){
 
   const view = () => {
     console.log(chatData);
-    return chatData[0] != null && chatData.map((value, index) => {
-      return value != null && value.num == 1 ? (
+    return chatData[0] !== null && chatData.map((value, index) => {
+      return value !== null && value.num === 1 ? (
         <div key={index}>
           {`${value.name}님 : ${value.msg}`}
         </div>

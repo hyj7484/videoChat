@@ -1,30 +1,5 @@
 import {useState, useEffect, useRef} from 'react';
-import {useRouteMatch} from 'react-router-dom';
 import io from 'socket.io-client';
-
-
-const drag = (element) => {
-  let pos1, pos2, pos3, pos4 = 0;
-  element.onmousedown = (e) => {
-    e.preventDefault();
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    document.onmouseup = (e) => {
-
-    }
-
-    document.onmousemove = (e) => {
-      e.preventDefault();
-      pos1 = pos3 - e.clientX;
-      pos2 = pos4 - e.clientY;
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-
-    }
-  }
-}
-
-
 
 const WebRTC = (props) => {
   const [socket, setSocket]                 = useState(null);
@@ -34,30 +9,28 @@ const WebRTC = (props) => {
 
   const room = props.room;
   const name = props.name || 'no Name';
-  const socketUrl = props.socketUrl;
-  const config = { 'iceServers' : [{
-    'urls' : 'stun:stun.l.google.com:19302'
-  }]};
-
-  const routeMatch = useRouteMatch('/chat/:room').params;
 
   useEffect(()=>{
+    const config = { 'iceServers' : [{
+      'urls' : 'stun:stun.l.google.com:19302'
+    }]};
+    const socketUrl = props.socketUrl;
     setPeerConnection(new RTCPeerConnection(config));
     setSocket(io.connect(`${socketUrl}/video`));
-    drag(videoHost.current);
-    drag(videoClient.current);
   }, []);
 
-  useEffect(async ()=>{
+  useEffect(()=>{
     if(socket !== null && peerConnection !== null){
       const option = {
         video : true,
         audio : true
       }
-      const stream = await navigator.mediaDevices.getUserMedia(option);
-      videoHost.current.srcObject = stream;
-      stream.getTracks().forEach(track => {
-        peerConnection.addTrack(track, stream);
+      navigator.mediaDevices.getUserMedia(option)
+      .then(stream => {
+        videoHost.current.srcObject = stream;
+        stream.getTracks().forEach(track => {
+          peerConnection.addTrack(track, stream);
+        });
       });
       peerConnection.onicecandidate = (e) => {
         if(e.candidate){
@@ -99,7 +72,7 @@ const WebRTC = (props) => {
       });
 
       const data = {
-        room : routeMatch.room,
+        room : room,
         name : name
       }
       socket.emit('init', data);
